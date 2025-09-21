@@ -48,6 +48,7 @@ export type Database = {
           id: string
           score_percentage: number
           song_artist: string
+          song_id: string | null
           song_title: string
           user_id: string
           user_lyrics: string
@@ -58,6 +59,7 @@ export type Database = {
           id?: string
           score_percentage: number
           song_artist: string
+          song_id?: string | null
           song_title: string
           user_id: string
           user_lyrics: string
@@ -68,9 +70,54 @@ export type Database = {
           id?: string
           score_percentage?: number
           song_artist?: string
+          song_id?: string | null
           song_title?: string
           user_id?: string
           user_lyrics?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scores_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      songs: {
+        Row: {
+          artist: string
+          audio_url: string | null
+          created_at: string
+          created_by: string | null
+          duration: number | null
+          id: string
+          lyrics: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          artist: string
+          audio_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration?: number | null
+          id?: string
+          lyrics: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          artist?: string
+          audio_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration?: number | null
+          id?: string
+          lyrics?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -14,6 +14,7 @@ const Index = () => {
   const [username, setUsername] = useState("");
   const [score, setScore] = useState(0);
   const [userLyrics, setUserLyrics] = useState("");
+  const [currentSong, setCurrentSong] = useState<any>(null);
 
   const handleLogin = (user: string) => {
     setUsername(user);
@@ -25,9 +26,10 @@ const Index = () => {
     }
   };
 
-  const handleScoreCalculated = (newScore: number, lyrics: string) => {
+  const handleScoreCalculated = (newScore: number, lyrics: string, song: any) => {
     setScore(newScore);
     setUserLyrics(lyrics);
+    setCurrentSong(song);
     setCurrentScreen("score");
   };
 
@@ -80,6 +82,7 @@ const Index = () => {
           username={username}
           score={score}
           userLyrics={userLyrics}
+          song={currentSong}
           onPlayAgain={handlePlayAgain}
           onShareScore={handleShareScore}
         />

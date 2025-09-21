@@ -1,45 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import MusicPlayer from "./MusicPlayer";
 
 interface GameScreenProps {
   username: string;
-  onScoreCalculated: (score: number, userLyrics: string) => void;
+  onScoreCalculated: (score: number, userLyrics: string, song: Song) => void;
 }
 
-// Sample songs with correct lyrics for demo
-const SAMPLE_SONGS = [
-  {
-    title: "Dancing Queen",
-    artist: "ABBA",
-    correctLyrics: "You can dance, you can jive, having the time of your life. See that girl, watch that scene, digging the dancing queen."
-  },
-  {
-    title: "Don't Stop Believin'",
-    artist: "Journey", 
-    correctLyrics: "Just a small town girl, living in a lonely world. She took the midnight train going anywhere."
-  },
-  {
-    title: "Sweet Caroline",
-    artist: "Neil Diamond",
-    correctLyrics: "Sweet Caroline, good times never seemed so good. I've been inclined to believe they never would."
-  }
-];
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  lyrics: string;
+  audio_url?: string;
+}
 
 const GameScreen = ({ username, onScoreCalculated }: GameScreenProps) => {
-  const [currentSong] = useState(SAMPLE_SONGS[Math.floor(Math.random() * SAMPLE_SONGS.length)]);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [userLyrics, setUserLyrics] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const calculateScore = () => {
-    if (!userLyrics.trim()) {
-      onScoreCalculated(0, userLyrics);
-      return;
+  useEffect(() => {
+    fetchSongs();
+  }, []);
+
+  const fetchSongs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("songs")
+        .select("*");
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setSongs(data);
+        const randomSong = data[Math.floor(Math.random() * data.length)];
+        setCurrentSong(randomSong);
+      } else {
+        toast({
+          title: "No songs available",
+          description: "Ask an admin to add some songs to the catalogue!",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching songs:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load songs",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Simple scoring algorithm - calculate similarity between user input and correct lyrics
-    const userWords = userLyrics.toLowerCase().split(/\s+/);
-    const correctWords = currentSong.correctLyrics.toLowerCase().split(/\s+/);
+  const calculateScore = (userInput: string, correctLyrics: string): number => {
+    // Simple scoring based on word matching
+    const userWords = userInput.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+    const correctWords = correctLyrics.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+    
+    if (userWords.length === 0) return 0;
     
     let matches = 0;
     userWords.forEach(word => {
@@ -47,10 +73,50 @@ const GameScreen = ({ username, onScoreCalculated }: GameScreenProps) => {
         matches++;
       }
     });
-
-    const score = Math.min(100, Math.round((matches / correctWords.length) * 100));
-    onScoreCalculated(score, userLyrics);
+    
+    return Math.min(Math.round((matches / correctWords.length) * 100), 100);
   };
+
+  const handleSubmit = () => {
+    if (!userLyrics.trim()) {
+      toast({
+        title: "Hold up! 🎤",
+        description: "Please enter some lyrics first!",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!currentSong) return;
+    
+    const score = calculateScore(userLyrics, currentSong.lyrics);
+    onScoreCalculated(score, userLyrics, currentSong);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-lg font-semibold">Loading songs... 🎵</h2>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!currentSong) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-lg font-semibold">No songs available</h2>
+            <p className="text-muted-foreground mt-2">Ask an admin to add some songs!</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -66,9 +132,18 @@ const GameScreen = ({ username, onScoreCalculated }: GameScreenProps) => {
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-primary text-xl">
+            <CardTitle className="text-primary text-xl mb-4">
               Song: {currentSong.title} by {currentSong.artist}
             </CardTitle>
+            {currentSong.audio_url && (
+              <div className="max-w-md mx-auto">
+                <MusicPlayer 
+                  audioUrl={currentSong.audio_url}
+                  title={currentSong.title}
+                  artist={currentSong.artist}
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
@@ -78,7 +153,7 @@ const GameScreen = ({ username, onScoreCalculated }: GameScreenProps) => {
               className="min-h-32 text-base"
             />
             <Button 
-              onClick={calculateScore}
+              onClick={handleSubmit}
               variant="secondary"
               size="lg"
               className="w-full"

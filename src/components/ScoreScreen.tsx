@@ -2,10 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  lyrics: string;
+}
+
 interface ScoreScreenProps {
   username: string;
   score: number;
   userLyrics: string;
+  song: Song;
   onPlayAgain: () => void;
   onShareScore: () => void;
 }
@@ -38,7 +46,7 @@ const getScoreMessage = (score: number) => {
   }
 };
 
-const ScoreScreen = ({ username, score, userLyrics, onPlayAgain, onShareScore }: ScoreScreenProps) => {
+const ScoreScreen = ({ username, score, userLyrics, song, onPlayAgain, onShareScore }: ScoreScreenProps) => {
   const scoreData = getScoreMessage(score);
 
   return (
@@ -58,6 +66,13 @@ const ScoreScreen = ({ username, score, userLyrics, onPlayAgain, onShareScore }:
         
         <CardContent className="space-y-6">
           <div className="text-center space-y-2">
+            <div className="mb-4 p-3 bg-card border rounded-lg">
+              <h4 className="font-medium text-primary">You played:</h4>
+              <p className="text-sm text-muted-foreground">
+                "{song.title}" by {song.artist}
+              </p>
+            </div>
+            
             <h3 className={`text-2xl font-bold ${scoreData.color}`}>
               {scoreData.title}
             </h3>
