@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 interface LoginScreenProps {
   onLogin: (username: string) => void;
+  onForgotPassword: () => void;
+  onRegister: () => void;
 }
 
-const LoginScreen = ({ onLogin }: LoginScreenProps) => {
+const LoginScreen = ({ onLogin, onForgotPassword, onRegister }: LoginScreenProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -57,14 +59,20 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
           </form>
           
           <div className="mt-6 text-center space-y-2">
-            <a href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <button 
+              onClick={onForgotPassword}
+              className="text-sm text-muted-foreground hover:text-primary"
+            >
               Forgot Password?
-            </a>
+            </button>
             <p className="text-sm text-muted-foreground">
               New here?{" "}
-              <a href="#" className="text-secondary hover:text-secondary/80 font-medium">
+              <button 
+                onClick={onRegister}
+                className="text-secondary hover:text-secondary/80 font-medium"
+              >
                 Join the fun!
-              </a>
+              </button>
             </p>
           </div>
         </CardContent>
