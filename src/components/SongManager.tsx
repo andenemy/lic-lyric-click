@@ -87,7 +87,10 @@ const SongManager = () => {
     try {
       const { data, error } = await supabase
         .from("songs")
-        .insert([newSong])
+        .insert([{
+          ...newSong,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        }])
         .select()
         .single();
 
